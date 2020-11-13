@@ -26,10 +26,10 @@ char* GetPath(char path[])
 	}
 
 	char encrypted_name[] = "\\decrypted.txt";
-	strcpy_s(namecpy,250, path);
-	for (i = 200; (namecpy[i] != '\\') ; i--);
+	strcpy_s(namecpy,len, path);
+	for (i = len; (namecpy[i] != '\\') ; i--);
 	namecpy[i] = '\0';
-	strcat(namecpy, encrypted_name);
+	strcat_s(namecpy,len,encrypted_name);
 	return namecpy;
 }
 
