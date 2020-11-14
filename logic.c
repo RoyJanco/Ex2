@@ -15,12 +15,12 @@
 #include "logic.h"
 
 //Declarations
-char* GetPath(char path[]);
+char* GetFileDirectory(char path[]);
 char decrypt_letter(char letter, int key);
 void decrypt_file(const FILE* p_read, const FILE* p_write, const int key);
 
 
-char* GetPath(char path[])
+char* GetFileDirectory(char path[])
 {
 	int i = 0;
 	int len = strlen(path) + 15;
@@ -42,14 +42,15 @@ char decrypt_letter(char letter, int key)
 { //this function encrypts the given letter with a given key
 	int flag_upper = isupper(letter);
 	int flag_number = isdigit(letter);
-	if (flag_number == 0)
+	if (flag_number == 0 && isalpha(letter))
 		if (flag_upper) //if letter
 			return 'A' + (letter - 'A' - key) % 26;
 		else
 			return 'a' + (letter - 'a' - key) % 26;
-	else //if digit
+	else if (flag_number)
 		return '0' + (letter - '0' - key) % 10;
-
+	else
+		return letter;
 }
 
 void decrypt_file(const FILE* p_read,const FILE* p_write,const int key)

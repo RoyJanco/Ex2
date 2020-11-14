@@ -3,20 +3,20 @@
 //Project Father
 //Description: father_func.h includes functions that are used by main.c
 
+#include <Windows.h>
+
 //Macros & definitions
 
-#ifndef __logic_h__
-#define __logic_h__
+#ifndef __files_handler_h__
+#define __files_handler_h__
 
 
 // Function Declarations -------------------------------------------------------
-char* GetFileDirectory(char path[]);
-char decrypt_letter(char letter, int key);
-void decrypt_file(const FILE* p_read, const FILE* p_write, const int key);
+HANDLE CreateFileHandleReadSimple(char* filename);
+HANDLE CreateFileHandleWriteSimple(char* filename);
 
 
 
-
-#endif // !__logic_h__
+#endif // !__files_handler_h__
 
 

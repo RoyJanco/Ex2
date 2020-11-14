@@ -140,10 +140,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="DecryptThread.c" />
     <ClCompile Include="logic.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="files_handler.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DecryptThread.h" />
+    <ClInclude Include="files_handler.h" />
     <ClInclude Include="logic.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

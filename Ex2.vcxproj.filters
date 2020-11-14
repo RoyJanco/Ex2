@@ -21,9 +21,21 @@
     <ClCompile Include="logic.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="files_handler.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DecryptThread.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="logic.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="files_handler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DecryptThread.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
