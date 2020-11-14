@@ -14,10 +14,16 @@
 //Project Includes
 #include "logic.h"
 
+// Constants
+static const int STATUS_CODE_SUCCESS = 0;
+static const int STATUS_CODE_FAILURE = -1;
+
 //Declarations
 char* GetFileDirectory(char path[]);
 char decrypt_letter(char letter, int key);
 void decrypt_file(const FILE* p_read, const FILE* p_write, const int key);
+int get_number_of_rows(char* file_path);
+int get_bytes_per_row(int* bytes_per_row, int num_of_rows, char* file_path);
 
 
 char* GetFileDirectory(char path[])
@@ -67,4 +73,77 @@ void decrypt_file(const FILE* p_read,const FILE* p_write,const int key)
 
 
 
+}
+
+int get_number_of_rows(char* file_path)
+{
+	errno_t retval;
+	FILE* p_input_file = NULL;
+	char c = 0;
+	int num_of_rows = 1; // minimum number of rows is 1
+
+	// Open file
+	retval = fopen_s(&p_input_file, file_path, "r");
+	if (0 != retval)
+	{
+		printf("Failed to open input file.\n");
+		return STATUS_CODE_FAILURE;
+	}
+	// Parse file and count number of rows
+	while (!feof(p_input_file))
+	{
+		c = fgetc(p_input_file);
+		if ('\n' == c)
+			num_of_rows++;
+	}
+
+	// Close file
+
+	if (NULL != p_input_file)
+		retval = fclose(p_input_file);
+	if (0 != retval)
+	{
+		printf("Failed to close input file.\n");
+		return STATUS_CODE_FAILURE;
+	}
+	return num_of_rows;
+}
+
+int get_bytes_per_row(int *bytes_per_row, int num_of_rows, char *file_path)
+{
+	errno_t retval;
+	FILE* p_input_file = NULL;
+	char c = 0;
+	int bytes_count = 0; // minimum number of rows is 1
+
+	// Open file
+	retval = fopen_s(&p_input_file, file_path, "r");
+	if (0 != retval)
+	{
+		printf("Failed to open input file.\n");
+		return STATUS_CODE_FAILURE;
+	}
+	// Parse file and count number of rows
+	while (!feof(p_input_file))
+	{
+		c = fgetc(p_input_file);
+		bytes_count++;
+		if ('\n' == c || feof(p_input_file)) //last byte in last row is eof, might be redundant
+		{
+			*bytes_per_row = bytes_count;
+			bytes_per_row++;
+			bytes_count = 0;
+		}
+	}
+
+	// Close file
+
+	if (NULL != p_input_file)
+		retval = fclose(p_input_file);
+	if (0 != retval)
+	{
+		printf("Failed to close input file.\n");
+		return STATUS_CODE_FAILURE;
+	}
+	return STATUS_CODE_SUCCESS;
 }

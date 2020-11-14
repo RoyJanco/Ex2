@@ -44,7 +44,8 @@ static HANDLE CreateThreadSimple(LPTHREAD_START_ROUTINE p_start_routine,
 int main(int argc, char* argv[])
 {
 	char* path = NULL;
-	int key = 0, i = 0, thread_num = 0;
+	int key = 0, i = 0, thread_num = 0, num_of_rows = 0;
+	int* bytes_per_row = NULL;
 	HANDLE thread_handle;
 	DWORD thread_id;
 	DWORD wait_code;
@@ -54,6 +55,12 @@ int main(int argc, char* argv[])
 	path = GetFileDirectory(argv[1]);
 	key = ((*argv[2])) - '0';
 	thread_num = ((*argv[3])) - '0';
+
+	/* Get number of rows and bytes per row in "top_secret_file.txt" */
+	// call this func
+	num_of_rows = get_number_of_rows(argv[1]);
+	bytes_per_row = (int*)malloc(num_of_rows*sizeof(int));
+	get_bytes_per_row(bytes_per_row, num_of_rows, argv[1]); //last byte in last row is eof, might be redundant
 
 	p_thread_params = (DECRYPT_THREAD_params_t*)malloc(sizeof(DECRYPT_THREAD_params_t));
 	if (NULL == p_thread_params)
