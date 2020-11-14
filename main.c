@@ -11,6 +11,10 @@
 #include <math.h>
 
 
+//includes projects
+#include "logic.h"
+
+
 
 //Macros & definitions
 
@@ -24,7 +28,7 @@ static const int STATUS_CODE_FAILURE = -1;
 
 
 //Declarations
-char encrypt_letter(char letter, int key);
+char decrypt_letter(char letter, int key);
 char* GetPath(char path[]);
 
 // Function Definitions --------------------------------------------------------
@@ -40,6 +44,9 @@ int main(int argc, char* argv[])
 
 	path = GetPath(argv[1]);
 	key = ((*argv[2])) - '0';
+	printf("%c", decrypt_letter('y',3));
+
+
 
 	// Open files
 	retval_output = fopen_s(&p_output_file,path,"w");
@@ -56,7 +63,7 @@ int main(int argc, char* argv[])
 	}
 
 	// Do something...
-	
+	decrypt_file(p_input_file, p_output_file, key);
 
 	// Close files
 	if(NULL!=p_output_file)
@@ -85,34 +92,3 @@ int main(int argc, char* argv[])
 }
 */
 
-char* GetPath(char path[])
-{
-	int i = 0;
-	int len = strlen(path) + 15;
-	char* namecpy = (char*)malloc((len) * sizeof(char));
-	if (namecpy == NULL) {
-		printf("argument memory allocation failed, exiting...\n ");
-		exit(1);
-	}
-
-	char encrypted_name[] = "\\decrypted.txt";
-	strcpy_s(namecpy, len, path);
-	for (i = len; (namecpy[i] != '\\'); i--);
-	namecpy[i] = '\0';
-	strcat_s(namecpy, len, encrypted_name);
-	return namecpy;
-}
-
-char encrypt_letter(char letter,int key)
-{ //this function encrypts the give letter with a given key
-	int flag_upper = isupper(letter);
-	int flag_number = isdigit(letter);
-	if (flag_number == 0)
-		if (flag_upper)
-			return 'A' + (letter - 'A' - key) % 26;
-		else
-			return 'a' + (letter - 'a' - key) % 26;
-	else
-		return '0' + (letter - '0' - key) % 10;
-	
-}
