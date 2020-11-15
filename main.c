@@ -46,15 +46,16 @@ int main(int argc, char* argv[])
 	char* path = NULL;
 	int key = 0, i = 0, thread_num = 0, num_of_rows = 0;
 	int* bytes_per_row = NULL;
-	HANDLE thread_handle;
 	DWORD thread_id;
 	DWORD wait_code;
 	DWORD exit_code;
 	BOOL ret_val;
-	DECRYPT_THREAD_params_t* p_thread_params;
+	DECRYPT_THREAD_params_t** p_thread_params;
 	path = GetFileDirectory(argv[1]);
 	key = ((*argv[2])) - '0';
 	thread_num = ((*argv[3])) - '0';
+	HANDLE *p_thread_handles = (HANDLE*)malloc(thread_num*sizeof(HANDLE));
+
 
 	/* Get number of rows and bytes per row in "top_secret_file.txt" */
 	// call this func
@@ -62,30 +63,50 @@ int main(int argc, char* argv[])
 	bytes_per_row = (int*)malloc(num_of_rows*sizeof(int));
 	get_bytes_per_row(bytes_per_row, num_of_rows, argv[1]); //last byte in last row is eof, might be redundant
 
-	p_thread_params = (DECRYPT_THREAD_params_t*)malloc(sizeof(DECRYPT_THREAD_params_t));
+	if (NULL == (p_thread_params = (DECRYPT_THREAD_params_t**)malloc(thread_num * sizeof(DECRYPT_THREAD_params_t*))))
+	{
+		printf("memory allocation failed, exiting\n");
+		exit(1);
+	}
+	for (i = 0; i < thread_num; i++) {
+
+		p_thread_params[i] = (DECRYPT_THREAD_params_t*)malloc( sizeof(DECRYPT_THREAD_params_t));
+		{
+			if (p_thread_params[i] == NULL)
+			{
+				printf("memory allocation failed, exiting\n");
+				exit(1);
+			}
+		}
+
+	}
+
+
+	for(i=0;i< thread_num;i++)
+	{ 
+	/* Prepare parameters for thread */
 	if (NULL == p_thread_params)
 	{
 		printf("Error when allocating memory");
 		return ERROR_CODE;
 	}
 
-	/* Prepare parameters for thread */
-	p_thread_params->key = key;
-	p_thread_params->end_index = 1;
-	p_thread_params->start_index = 1;
-	p_thread_params->path_dst = path;
-	p_thread_params->path_src = argv[1];
-
+	p_thread_params[i]->key = key;
+	p_thread_params[i]->end_index = 1;
+	p_thread_params[i]->start_index = 1;
+	p_thread_params[i]->path_dst = path;
+	p_thread_params[i]->path_src = argv[1];
+	}
 
 	/* Create thread */
-	thread_handle = CreateThreadSimple(DecryptThread, p_thread_params, &thread_id);
-	if (NULL == thread_handle)
+	p_thread_handles[0] = CreateThreadSimple(DecryptThread, p_thread_params[0], &thread_id);
+	if (NULL == p_thread_handles[0])
 	{
 		printf("Error when creating thread\n");
 		return ERROR_CODE;
 	}
 	/* Wait */
-	wait_code = WaitForSingleObject(thread_handle, INFINITE);
+	wait_code = WaitForSingleObject(p_thread_handles[0], INFINITE);
 	if (WAIT_OBJECT_0 != wait_code)
 	{
 		printf("Error when waiting\n");
@@ -93,7 +114,7 @@ int main(int argc, char* argv[])
 	}
 
 	/* Check the DWORD returned by MathThread */
-	ret_val = GetExitCodeThread(thread_handle, &exit_code);
+	ret_val = GetExitCodeThread(p_thread_handles[0], &exit_code);
 	if (0 == ret_val)
 	{
 		printf("Error when getting thread exit code\n");
@@ -113,7 +134,7 @@ int main(int argc, char* argv[])
 	free(p_thread_params);
 
 	/* Close thread handle */
-	ret_val = CloseHandle(thread_handle);
+	ret_val = CloseHandle(p_thread_handles[0]);
 	if (false == ret_val)
 	{
 		printf("Error when closing\n");
