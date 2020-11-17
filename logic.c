@@ -24,6 +24,7 @@ char decrypt_letter(char letter, int key);
 void decrypt_file(const FILE* p_read, const FILE* p_write, const int key);
 int get_number_of_rows(char* file_path);
 int get_bytes_per_row(int* bytes_per_row, int num_of_rows, char* file_path);
+int partial_sum(int* arr, int start, int end);
 
 
 char* GetFileDirectory(char path[])
@@ -128,11 +129,22 @@ int get_bytes_per_row(int *bytes_per_row, int num_of_rows, char *file_path)
 	{
 		c = fgetc(p_input_file);
 		bytes_count++;
-		if ('\n' == c || feof(p_input_file)) //last byte in last row is eof, might be redundant
+		//|| feof(p_input_file)
+		if ('\n' == c ) //last byte in last row is eof, might be redundant
 		{
+			bytes_count++; //for CRLF character
 			*bytes_per_row = bytes_count;
 			bytes_per_row++;
 			bytes_count = 0;
+		}
+		else if (feof(p_input_file))
+		{
+			bytes_count--;
+
+			*bytes_per_row = bytes_count;
+			bytes_per_row++;
+			bytes_count = 0;
+
 		}
 	}
 
@@ -146,4 +158,18 @@ int get_bytes_per_row(int *bytes_per_row, int num_of_rows, char *file_path)
 		return STATUS_CODE_FAILURE;
 	}
 	return STATUS_CODE_SUCCESS;
+}
+
+
+
+int partial_sum(int* arr,int start,int end)
+//this function calculates the parital sum of an array from index 0 to index k
+{
+	int i = 0;
+	int sum = 0;
+	for (i=start; i <= end; i++)
+		sum  = sum +arr[i];
+
+	return sum;
+
 }

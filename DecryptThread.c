@@ -51,7 +51,7 @@ DWORD WINAPI DecryptThread(LPVOID lpParam)
 	/* Check if lpParam is NULL */
 	if (NULL == lpParam)
 	{
-		return MATH_THREAD__CODE_NULL_PTR;
+		return CAESAR_THREAD__CODE_NULL_PTR;
 	}
 
 	/*
@@ -67,7 +67,7 @@ DWORD WINAPI DecryptThread(LPVOID lpParam)
 
 	char inBuffer[BUF_SIZE];
 	//char inBuffer = 0;
-
+	int counter = 0;
 	DWORD nBytesToRead = 1;
 	DWORD dwBytesRead = 0;
 	DWORD dwFileSize = GetFileSize(hfile_read, NULL);
@@ -76,11 +76,13 @@ DWORD WINAPI DecryptThread(LPVOID lpParam)
 	char temp_char = '0';
 	//func (begin)
 
-	//SetFilePointer(hfile_read, 17, NULL, FILE_CURRENT);
-	//SetEndOfFile(hfile_read);
-	//SetFilePointer(hfile_read, -17, NULL, FILE_CURRENT);
 
-	while (!(bResult && dwBytesRead == 0))
+	SetFilePointer(hfile_read, p_params->start_index, NULL, FILE_BEGIN);
+
+	SetFilePointer(hfile_write, p_params->start_index, NULL, FILE_BEGIN);
+	//	while (!(bResult && dwBytesRead == 0)) //whike (n<stop-end)
+
+	while (counter<=(p_params->end_index-p_params->start_index)) //whike (n<stop-end)
 	{
 		bResult = ReadFile(hfile_read,
 			inBuffer,
@@ -96,9 +98,10 @@ DWORD WINAPI DecryptThread(LPVOID lpParam)
 		{
 			printf("End of file\n");
 		}
+		counter++;
 	}
 
-	return MATH_THREAD__CODE_SUCCESS;
+	return CAESAR_THREAD__CODE_SUCCESS;
 
 	// Open files
 	/*retval_output = fopen_s(&p_output_file,path,"w");

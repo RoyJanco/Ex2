@@ -18,9 +18,9 @@
 */
 typedef enum
 {
-	MATH_THREAD__CODE_SUCCESS,
-	MATH_THREAD__CODE_NULL_PTR,
-} MATH_THREAD__return_code_t;
+	CAESAR_THREAD__CODE_SUCCESS,
+	CAESAR_THREAD__CODE_NULL_PTR,
+} CAESAR_THREAD__return_code_t;
 
 /*
 * A type for thread parameters

@@ -20,7 +20,7 @@
 
 
 //Macros & definitions
-
+#define TIMEOUT_IN_MILLISECONDS 5000
 #define _CRT_SECURE_NO_DEPRECATE
 #define _CRT_SECURE_NO_WARNINGS
 #define BUF_SIZE 1
@@ -46,10 +46,9 @@ int main(int argc, char* argv[])
 	char* path = NULL;
 	int key = 0, i = 0, thread_num = 0, num_of_rows = 0;
 	int* bytes_per_row = NULL;
-	DWORD thread_id;
-	DWORD wait_code;
-	DWORD exit_code;
-	BOOL ret_val;
+	DWORD *thread_id; ///malloc to size of threadnum
+	DWORD wait_code, exit_code;
+	BOOL ret_val,is_error_exitcode=FALSE, is_error_closing_thread= FALSE;
 	DECRYPT_THREAD_params_t** p_thread_params;
 	path = GetFileDirectory(argv[1]);
 	key = ((*argv[2])) - '0';
@@ -60,7 +59,8 @@ int main(int argc, char* argv[])
 	/* Get number of rows and bytes per row in "top_secret_file.txt" */
 	// call this func
 	num_of_rows = get_number_of_rows(argv[1]);
-	bytes_per_row = (int*)malloc(num_of_rows*sizeof(int));
+	bytes_per_row = (int*)malloc(num_of_rows*sizeof(int));//check memory
+	thread_id= (DWORD*)malloc(num_of_rows * sizeof(DWORD));///check
 	get_bytes_per_row(bytes_per_row, num_of_rows, argv[1]); //last byte in last row is eof, might be redundant
 
 	if (NULL == (p_thread_params = (DECRYPT_THREAD_params_t**)malloc(thread_num * sizeof(DECRYPT_THREAD_params_t*))))
@@ -80,105 +80,100 @@ int main(int argc, char* argv[])
 		}
 
 	}
-
-
+	int N = num_of_rows / thread_num;
+	int mod= num_of_rows % thread_num;
+	int lines = 0;
+	int pre_lines = 0;
 	for(i=0;i< thread_num;i++)
 	{ 
-	/* Prepare parameters for thread */
-	if (NULL == p_thread_params)
-	{
-		printf("Error when allocating memory");
-		return ERROR_CODE;
-	}
+		if (mod > 0)
+		{
+			lines = N + 1;
+			mod--;
+		}
+		else
+			lines = N;
+		/* Prepare parameters for thread */
+		if (NULL == p_thread_params[i])
+		{
+			printf("Error when allocating memory");
+			return ERROR_CODE;
+		}
+		if (i==0)
+		{
+			
+			p_thread_params[i]->key = key;
+			p_thread_params[i]->end_index = partial_sum(bytes_per_row,0,lines-1)-1;
+			p_thread_params[i]->start_index = 0;
+			p_thread_params[i]->path_dst = path;
+			p_thread_params[i]->path_src = argv[1];
+		}
+		else
+		{
+			p_thread_params[i]->key = key;
+			p_thread_params[i]->start_index = (p_thread_params[i - 1]->end_index + 1);
+			p_thread_params[i]->end_index =( p_thread_params[i]->start_index+(partial_sum(bytes_per_row, pre_lines,pre_lines+lines-1)))-1;
+			p_thread_params[i]->path_dst = path;
+			p_thread_params[i]->path_src = argv[1];
+		}
+		pre_lines = pre_lines + lines;
 
-	p_thread_params[i]->key = key;
-	p_thread_params[i]->end_index = 1;
-	p_thread_params[i]->start_index = 1;
-	p_thread_params[i]->path_dst = path;
-	p_thread_params[i]->path_src = argv[1];
 	}
 
 	/* Create thread */
-	p_thread_handles[0] = CreateThreadSimple(DecryptThread, p_thread_params[0], &thread_id);
-	if (NULL == p_thread_handles[0])
+	for (i = 0; i < thread_num; i++)
 	{
-		printf("Error when creating thread\n");
-		return ERROR_CODE;
+		p_thread_handles[i] = CreateThreadSimple(DecryptThread, p_thread_params[i], &thread_id[i]);
+		if (NULL == p_thread_handles[i])
+		{
+			printf("Error when creating thread\n");
+			return ERROR_CODE; 
+		}
 	}
 	/* Wait */
-	wait_code = WaitForSingleObject(p_thread_handles[0], INFINITE);
+	wait_code = WaitForMultipleObjects(thread_num, p_thread_handles,TRUE, TIMEOUT_IN_MILLISECONDS); //wait for multi not infinite
 	if (WAIT_OBJECT_0 != wait_code)
 	{
 		printf("Error when waiting\n");
 		return ERROR_CODE;
 	}
-
-	/* Check the DWORD returned by MathThread */
-	ret_val = GetExitCodeThread(p_thread_handles[0], &exit_code);
-	if (0 == ret_val)
+	for (i = 0; i < thread_num; i++)
 	{
-		printf("Error when getting thread exit code\n");
-	}
+		/* Check the DWORD returned by MathThread */
+		ret_val = GetExitCodeThread(p_thread_handles[i], &exit_code);
+		if (0 == ret_val)
+		{
+			printf("Error when getting thread exit code\n");
+		}
 
-	/* Print results, if thread succeeded */
-	if (MATH_THREAD__CODE_SUCCESS == exit_code)
-	{
-		printf("Succeeded\n");
+		/* Print results, if thread succeeded */
+		if (CAESAR_THREAD__CODE_SUCCESS == exit_code)
+		{
+			printf("Thread %d Succeeded\n",thread_id[i]);
+		}
+		else
+		{
+			printf("Error in thread %d: %d\n", thread_id[i], exit_code);
+		}
+		is_error_exitcode = (is_error_exitcode || !ret_val); //error in exitcode
 	}
-	else
-	{
-		printf("Error in thread: %d\n", exit_code);
-	}
-
 	/* Free memory */
 	free(p_thread_params);
 
 	/* Close thread handle */
-	ret_val = CloseHandle(p_thread_handles[0]);
-	if (false == ret_val)
+	for (i = 0; i < thread_num; i++)
+		
 	{
-		printf("Error when closing\n");
-		return ERROR_CODE;
+		ret_val = CloseHandle(p_thread_handles[i]);
+		is_error_closing_thread = is_error_closing_thread || (!ret_val);
+		if (false == ret_val) // error in closing handle
+		{
+			printf("Error when closing %d\n", thread_id[i]);
+			//return ERROR_CODE;
+		}
 	}
 
 	return SUCCESS_CODE;
-
-	
-
-	
-	// Open files
-	/*retval_output = fopen_s(&p_output_file,path,"w");
-	if (0 != retval_output)
-	{
-		printf("Failed to open output file.\n");
-		return STATUS_CODE_FAILURE;
-	}
-	retval_input = fopen_s(&p_input_file, argv[1], "r");
-	if (0 != retval_input)
-	{
-		printf("Failed to open input file.\n");
-		return STATUS_CODE_FAILURE;
-	}
-
-	// Do something...
-	decrypt_file(p_input_file, p_output_file, key);
-
-	// Close files
-	if(NULL!=p_output_file)
-		retval_output = fclose(p_output_file);
-	if(NULL!=p_input_file)
-		retval_input = fclose(p_input_file);
-	if (0 != retval_output)
-	{
-		printf("Failed to close output file.\n");
-		return STATUS_CODE_FAILURE;
-	}
-	if (0 != retval_input)
-	{
-		printf("Failed to close input file.\n");
-		return STATUS_CODE_FAILURE;
-	}*/
-
 }
 
 static HANDLE CreateThreadSimple(LPTHREAD_START_ROUTINE p_start_routine,
