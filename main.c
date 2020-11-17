@@ -20,7 +20,7 @@
 
 
 //Macros & definitions
-#define TIMEOUT_IN_MILLISECONDS 5000
+#define TIMEOUT_IN_MILLISECONDS 10000
 #define _CRT_SECURE_NO_DEPRECATE
 #define _CRT_SECURE_NO_WARNINGS
 #define BUF_SIZE 1
@@ -51,16 +51,25 @@ int main(int argc, char* argv[])
 	BOOL ret_val,is_error_exitcode=FALSE, is_error_closing_thread= FALSE;
 	DECRYPT_THREAD_params_t** p_thread_params;
 	path = GetFileDirectory(argv[1]);
-	key = ((*argv[2])) - '0';
-	thread_num = ((*argv[3])) - '0';
+	key = atoi(argv[2]);
+	thread_num = atoi(argv[3]);
 	HANDLE *p_thread_handles = (HANDLE*)malloc(thread_num*sizeof(HANDLE));
 
 
 	/* Get number of rows and bytes per row in "top_secret_file.txt" */
 	// call this func
 	num_of_rows = get_number_of_rows(argv[1]);
-	bytes_per_row = (int*)malloc(num_of_rows*sizeof(int));//check memory
-	thread_id= (DWORD*)malloc(num_of_rows * sizeof(DWORD));///check
+	if (NULL == (bytes_per_row = (int*)malloc(num_of_rows * sizeof(int))))
+	{
+		printf("memory allocation failed, exiting"); //check memory
+		exit(1);
+	}
+	if(NULL== (thread_id= (DWORD*)malloc(num_of_rows * sizeof(DWORD))))///check
+	{
+		printf("memory allocation failed, exiting");
+		exit(1);
+
+	}
 	get_bytes_per_row(bytes_per_row, num_of_rows, argv[1]); //last byte in last row is eof, might be redundant
 
 	if (NULL == (p_thread_params = (DECRYPT_THREAD_params_t**)malloc(thread_num * sizeof(DECRYPT_THREAD_params_t*))))
@@ -157,11 +166,8 @@ int main(int argc, char* argv[])
 		}
 		is_error_exitcode = (is_error_exitcode || !ret_val); //error in exitcode
 	}
-	/* Free memory */
-	free(p_thread_params);
-
 	/* Close thread handle */
-	for (i = 0; i < thread_num; i++)
+	for (i = 0; i < thread_num; i++) 
 		
 	{
 		ret_val = CloseHandle(p_thread_handles[i]);
@@ -172,7 +178,14 @@ int main(int argc, char* argv[])
 			//return ERROR_CODE;
 		}
 	}
-
+	/* Free memory */
+	free(thread_id);
+	free(p_thread_params);
+	free(path);
+	free(bytes_per_row);
+	free(p_thread_handles);
+	if (is_error_closing_thread || is_error_exitcode)
+		return ERROR_CODE;
 	return SUCCESS_CODE;
 }
 

@@ -25,6 +25,8 @@ void decrypt_file(const FILE* p_read, const FILE* p_write, const int key);
 int get_number_of_rows(char* file_path);
 int get_bytes_per_row(int* bytes_per_row, int num_of_rows, char* file_path);
 int partial_sum(int* arr, int start, int end);
+int mod_func(int a, int b);
+
 
 
 char* GetFileDirectory(char path[])
@@ -49,13 +51,17 @@ char decrypt_letter(char letter, int key)
 { //this function encrypts the given letter with a given key
 	int flag_upper = isupper(letter);
 	int flag_number = isdigit(letter);
+	char temp = 0;
+
 	if (flag_number == 0 && isalpha(letter))
 		if (flag_upper) //if letter
-			return 'A' + (letter - 'A' - key) % 26;
+			
+			return 'A' + mod_func((letter - 'A' - key),26);
 		else
-			return 'a' + (letter - 'a' - key) % 26;
+			return 'a' + mod_func((letter - 'a' - key), 26);
+
 	else if (flag_number)
-		return '0' + (letter - '0' - key) % 10;
+		return '0' + mod_func((letter - '0' - key), 10);
 	else
 		return letter;
 }
@@ -171,5 +177,18 @@ int partial_sum(int* arr,int start,int end)
 		sum  = sum +arr[i];
 
 	return sum;
+
+}
+
+int mod_func(int a,int b)
+{
+	int i = 0;
+	if (a >= 0)
+		return a % b;
+	else
+		do(a = a + b);
+	while (a < 0);
+
+	return a % b;
 
 }

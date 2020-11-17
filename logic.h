@@ -16,7 +16,7 @@ void decrypt_file(const FILE* p_read, const FILE* p_write, const int key);
 int get_number_of_rows(char* file_path);
 int get_bytes_per_row(int* bytes_per_row, int num_of_rows, char* file_path);
 int partial_sum(int* arr, int start, int end);
-
+int mod_func(int a, int b);
 
 
 

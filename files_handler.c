@@ -4,7 +4,6 @@
 #include <strsafe.h>
 #include "files_handler.h"
 
-#define BUFFERSIZE 100
 HANDLE CreateFileHandleReadSimple(char* filename);
 HANDLE CreateFileHandleWriteSimple(char* filename);
 
@@ -13,7 +12,6 @@ HANDLE CreateFileHandleReadSimple(char* filename)
 {
     HANDLE hFile;
     DWORD  dwBytesRead = 0;
-    char   ReadBuffer[BUFFERSIZE] = { 0 };
     OVERLAPPED ol = { 0 };
 
  
@@ -29,7 +27,7 @@ HANDLE CreateFileHandleReadSimple(char* filename)
     if (hFile == INVALID_HANDLE_VALUE)
     {
         //DisplayError(TEXT("CreateFile"));
-        printf(TEXT("Terminal failure: unable to open file \"%s\" for read.\n"), filename);
+        printf("Terminal failure: unable to open file \"%s\" for read.\n", filename);
         return;
     }
 
@@ -48,9 +46,16 @@ HANDLE CreateFileHandleWriteSimple(char* filename)
     //DWORD dwBytesToWrite = (DWORD)strlen(DataBuffer);
     DWORD dwBytesWritten = 0;
     BOOL bErrorFlag = FALSE;
-    TCHAR test[200] = { NULL };      ///allocate memory!!!!
-    swprintf(test, 200, L"%hs", filename);
-    hFile = CreateFile(test,                // name of the write
+   // TCHAR test[200] = { NULL };      ///allocate memory!!!!
+    TCHAR *path =  NULL ;
+    if (NULL == (path = (TCHAR*)malloc((1 + strlen(filename)) * sizeof(TCHAR))))
+    {
+        printf("memory allocation failed, exiting");
+        exit(1);
+    }
+
+    swprintf(path, 1 + strlen(filename), L"%hs", filename);
+    hFile = CreateFile(path,                // name of the write
         GENERIC_WRITE,          // open for writing
         FILE_SHARE_WRITE,                      // do not share
         NULL,                   // default security
@@ -61,10 +66,9 @@ HANDLE CreateFileHandleWriteSimple(char* filename)
     if (hFile == INVALID_HANDLE_VALUE)
     {
  
-        printf(TEXT("Terminal failure: Unable to open file \"%s\" for write.\n"), filename);
+        printf("Terminal failure: Unable to open file \"%s\" for write.\n", filename);
         return;
     }
-
+    free(path);
     return hFile;
-
 }
