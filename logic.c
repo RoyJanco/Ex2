@@ -19,17 +19,17 @@ static const int STATUS_CODE_SUCCESS = 0;
 static const int STATUS_CODE_FAILURE = -1;
 
 //Declarations
-char* GetFileDirectory(char path[]);
-char decrypt_letter(char letter, int key);
-void decrypt_file(const FILE* p_read, const FILE* p_write, const int key);
+char* GetFileDirectory(char path[], int operation);
+char decrypt_letter(char letter, int key, int flag);
+//void decrypt_file(const FILE* p_read, const FILE* p_write, const int key);
 int get_number_of_rows(char* file_path);
 int get_bytes_per_row(int* bytes_per_row, int num_of_rows, char* file_path);
 int partial_sum(int* arr, int start, int end);
 int mod_func(int a, int b);
+int get_operation(char* flag);
 
 
-
-char* GetFileDirectory(char path[])
+char* GetFileDirectory(char path[],int operation) // if operation=0 decrypt, else encrypt
 {
 	int i = 0;
 	int len = strlen(path) + 15;
@@ -40,48 +40,35 @@ char* GetFileDirectory(char path[])
 	}
 
 	char decrypted_name[] = "\\decrypted.txt";
+	char encrypted_name[] = "\\encrypted.txt";
 	strcpy_s(namecpy, len, path);
 	for (i = len; (namecpy[i] != '\\'); i--);
 	namecpy[i] = '\0';
-	strcat_s(namecpy, len, decrypted_name);
+	if (operation == 0)
+		strcat_s(namecpy, len, decrypted_name);
+	else
+		strcat_s(namecpy, len, encrypted_name);
 	return namecpy;
 }
 
-char decrypt_letter(char letter, int key)
+char decrypt_letter(char letter, int key,int flag)
 { //this function encrypts the given letter with a given key
 	int flag_upper = isupper(letter);
 	int flag_number = isdigit(letter);
 	char temp = 0;
-
+	int flag_op = (2 * flag) - 1;
 	if (flag_number == 0 && isalpha(letter))
 		if (flag_upper) //if letter
 			
-			return 'A' + mod_func((letter - 'A' - key),26);
+			return 'A' + mod_func((letter - 'A' + flag_op *key),26);
 		else
-			return 'a' + mod_func((letter - 'a' - key), 26);
+			return 'a' + mod_func((letter - 'a' + flag_op * key), 26);
 
 	else if (flag_number)
-		return '0' + mod_func((letter - '0' - key), 10);
+		return '0' + mod_func((letter - '0' + flag_op * key), 10);
 	else
 		return letter;
 }
-
-void decrypt_file(const FILE* p_read,const FILE* p_write,const int key)
-{
-	char read_letter = 0;
-	while (!feof(p_read))
-	{
-		read_letter = fgetc(p_read);
-		if (isdigit(read_letter) || isalpha(read_letter))
-			read_letter = (decrypt_letter(read_letter,key));
-		fputc(read_letter, p_write);
-
-	}
-
-
-
-}
-
 int get_number_of_rows(char* file_path)
 {
 	errno_t retval;
@@ -181,7 +168,7 @@ int partial_sum(int* arr,int start,int end)
 }
 
 int mod_func(int a,int b)
-{
+{//calculate the modulu of a number 
 	int i = 0;
 	if (a >= 0)
 		return a % b;
@@ -191,4 +178,16 @@ int mod_func(int a,int b)
 
 	return a % b;
 
+}
+
+int get_operation(char* flag)
+/* this function return 0 for decryption and 1 for encryption*/
+{
+	
+	if (!strcmp(flag, "-e"))
+		return 1;
+	else if (!strcmp(flag, "-d"))
+		return 0;
+	else
+		return -1;
 }

@@ -26,11 +26,11 @@
 
 static const int STATUS_CODE_SUCCESS = 0;
 static const int STATUS_CODE_FAILURE = -1;
-
+extern int flag_operation;
 
 //Declarations
-char decrypt_letter(char letter, int key);
-char* GetFileDirectory(char path[]);
+//char decrypt_letter(char letter, int key);
+//char* GetFileDirectory(char path[]);
 
 // Function Definitions --------------------------------------------------------
 
@@ -85,7 +85,7 @@ DWORD WINAPI DecryptThread(LPVOID lpParam)
 			NULL);
 		//inBuffer[1]='\0';
 		//printf("%s", inBuffer);
-		temp_char = decrypt_letter(inBuffer[0], p_params->key);
+		temp_char = decrypt_letter(inBuffer[0], p_params->key, flag_operation);
 		inBuffer[0] = temp_char;
 		WriteFile(hfile_write, inBuffer, dwBytesToWrite, &dwBytesWritten, NULL);
 		if (bResult && dwBytesRead == 0)

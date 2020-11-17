@@ -30,11 +30,9 @@
 
 static const int STATUS_CODE_SUCCESS = 0;
 static const int STATUS_CODE_FAILURE = -1;
-
+int flag_operation = 0;
 
 //Declarations
-char decrypt_letter(char letter, int key);
-char* GetFileDirectory(char path[]);
 static HANDLE CreateThreadSimple(LPTHREAD_START_ROUTINE p_start_routine,
 	LPVOID p_thread_parameters,
 	LPDWORD p_thread_id);
@@ -50,7 +48,13 @@ int main(int argc, char* argv[])
 	DWORD wait_code, exit_code;
 	BOOL ret_val,is_error_exitcode=FALSE, is_error_closing_thread= FALSE;
 	DECRYPT_THREAD_params_t** p_thread_params;
-	path = GetFileDirectory(argv[1]);
+	flag_operation = get_operation(argv[4]);
+	if (flag_operation == -1)
+	{
+		printf("Invalid input, exiting");
+		exit(1);
+	}
+	path = GetFileDirectory(argv[1],flag_operation);
 	key = atoi(argv[2]);
 	thread_num = atoi(argv[3]);
 	HANDLE *p_thread_handles = (HANDLE*)malloc(thread_num*sizeof(HANDLE));
