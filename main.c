@@ -41,6 +41,7 @@ static HANDLE CreateThreadSimple(LPTHREAD_START_ROUTINE p_start_routine,
 
 int main(int argc, char* argv[])
 {
+	int N=0,mod = 0, lines=0 ,pre_lines = 0;
 	char* path = NULL;
 	int key = 0, i = 0, thread_num = 0, num_of_rows = 0;
 	int* bytes_per_row = NULL;
@@ -93,10 +94,8 @@ int main(int argc, char* argv[])
 		}
 
 	}
-	int N = num_of_rows / thread_num;
-	int mod= num_of_rows % thread_num;
-	int lines = 0;
-	int pre_lines = 0;
+	 N = num_of_rows / thread_num;
+	 mod= num_of_rows % thread_num;
 	for(i=0;i< thread_num;i++)
 	{ 
 		if (mod > 0)
