@@ -1,7 +1,7 @@
 //File Header
 //Authors: Roy janco 311372205 Almog Carmeli 311151070
 //Project Father
-//Description: father_func.h includes functions that are used by main.c
+//Description: logic.h includes core functions that used by main.c
 
 //Macros & definitions
 

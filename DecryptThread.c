@@ -1,7 +1,7 @@
 //File Header
 //Authors: Roy janco 311372205 Almog Carmeli 311151070
 //Project Caesar
-//Description: main.c includes functions that are used by main.c
+//Description: DecryptThread.c includes the main function of the thread.
 
 // Includes --------------------------------------------------------------------
 #include <string.h>
@@ -35,7 +35,16 @@ extern int flag_operation;
 // Function Definitions --------------------------------------------------------
 
 
-
+/*
+* Implementation of the functionality of the threads.
+* Each thread reads byte, then encrypts or decrypts it, and writes it to the output file.
+* Each thread gets index for start point and end point to read from or write to.
+* Input Arguments:
+*   lpParam: A struct of the input arguments, defined in DecrpytThread.h.
+* Return:
+*   CAESAR_THREAD__CODE_SUCCESS: if the thread ended successfully.
+*	CAESAR_THREAD__CODE_NULL_PTR: if lpParam is NULL.
+*/
 DWORD WINAPI DecryptThread(LPVOID lpParam)
 {
 	DECRYPT_THREAD_params_t *p_params;
@@ -70,14 +79,16 @@ DWORD WINAPI DecryptThread(LPVOID lpParam)
 	BOOL bResult = FALSE;
 	char temp_char = '0';
 
-
+	/* Set file pointers to start index given by thread parameters*/
 	SetFilePointer(hfile_read, p_params->start_index, NULL, FILE_BEGIN);
-
 	SetFilePointer(hfile_write, p_params->start_index, NULL, FILE_BEGIN);
+
 	//	while (!(bResult && dwBytesRead == 0)) //whike (n<stop-end)
 
-	while (counter<=(p_params->end_index-p_params->start_index)) //whike (n<stop-end)
+	/* While counter is less than number of bytes to read or write */
+	while (counter<=(p_params->end_index-p_params->start_index)) //while (n<stop-end)
 	{
+		/*Read 1 byte from file*/
 		bResult = ReadFile(hfile_read,
 			inBuffer,
 			nBytesToRead,
@@ -85,8 +96,11 @@ DWORD WINAPI DecryptThread(LPVOID lpParam)
 			NULL);
 		//inBuffer[1]='\0';
 		//printf("%s", inBuffer);
+
+		/*Decrpyt or encrypt letter. operation is defined by flag_operation*/
 		temp_char = decrypt_letter(inBuffer[0], p_params->key, flag_operation);
 		inBuffer[0] = temp_char;
+		/* Write the decrypted or encrypted letter to the output file*/
 		WriteFile(hfile_write, inBuffer, dwBytesToWrite, &dwBytesWritten, NULL);
 		if (bResult && dwBytesRead == 0)
 		{

@@ -1,7 +1,7 @@
 //File Header
 //Authors: Roy janco 311372205 Almog Carmeli 311151070
 //Project Caesar
-//Description: main.c includes functions that are used by main.c
+//Description: main.c is the main file for Ex2 project Caesar
 
 // Includes --------------------------------------------------------------------
 #include <string.h>
@@ -33,58 +33,97 @@ static const int STATUS_CODE_FAILURE = -1;
 int flag_operation = 0;
 
 //Declarations
+
+/*
+* A simplified API for creating threads.
+* Input Arguments:
+*   p_start_routine: A pointer to the function to be executed by the thread.
+* Output Arguments:
+*   p_thread_id: A pointer to a variable that receives the thread identifier.
+*     If this parameter is NULL, the thread identifier is not returned.
+* Return:
+*   If the function succeeds, the return value is a handle to the new thread.
+*   If the function fails, the return value is NULL.
+*/
 static HANDLE CreateThreadSimple(LPTHREAD_START_ROUTINE p_start_routine,
 	LPVOID p_thread_parameters,
 	LPDWORD p_thread_id);
+
+/*The main function of Caesar project*/
+int Caesar_main(char* argv[]);
+
 
 // Function Definitions --------------------------------------------------------
 
 int main(int argc, char* argv[])
 {
-	int N=0,mod = 0, lines=0 ,pre_lines = 0;
+	Caesar_main(argv);
+	return 0;
+}
+
+
+int Caesar_main(char* argv[])
+{
+	int N = 0, mod = 0, lines = 0, pre_lines = 0;
 	char* path = NULL;
 	int key = 0, i = 0, thread_num = 0, num_of_rows = 0;
 	int* bytes_per_row = NULL;
-	DWORD *thread_id; ///malloc to size of threadnum
+	DWORD* thread_id; ///malloc to size of threadnum
 	DWORD wait_code, exit_code;
-	BOOL ret_val,is_error_exitcode=FALSE, is_error_closing_thread= FALSE;
+	BOOL ret_val, is_error_exitcode = FALSE, is_error_closing_thread = FALSE;
 	DECRYPT_THREAD_params_t** p_thread_params;
+
+	/*Get operation: decryption or encryption*/
 	flag_operation = get_operation(argv[4]);
 	if (flag_operation == -1)
 	{
 		printf("Invalid input, exiting");
 		exit(1);
 	}
-	path = GetFileDirectory(argv[1],flag_operation);
+	/*Get file directory from the path of the input file*/
+	path = GetFileDirectory(argv[1], flag_operation);
+
+	/*Get key*/
 	key = atoi(argv[2]);
+
+	/*Get number of threads*/
 	thread_num = atoi(argv[3]);
-	HANDLE *p_thread_handles = (HANDLE*)malloc(thread_num*sizeof(HANDLE));
+
+	/*Allocate memory for the handles of the threads*/
+	HANDLE* p_thread_handles = (HANDLE*)malloc(thread_num * sizeof(HANDLE));
 
 
-	/* Get number of rows and bytes per row in "top_secret_file.txt" */
-	// call this func
+	/* Get number of rows from in the input file */
 	num_of_rows = get_number_of_rows(argv[1]);
+
+	/* Allocate memory for the array of bytes_per_row*/
 	if (NULL == (bytes_per_row = (int*)malloc(num_of_rows * sizeof(int))))
 	{
 		printf("memory allocation failed, exiting"); //check memory
 		exit(1);
 	}
-	if(NULL== (thread_id= (DWORD*)malloc(num_of_rows * sizeof(DWORD))))///check
+
+	/*Allocate memory for the threads id*/
+	if (NULL == (thread_id = (DWORD*)malloc(num_of_rows * sizeof(DWORD))))///check
 	{
 		printf("memory allocation failed, exiting");
 		exit(1);
 
 	}
+	/*Get number of bytes per row in the input file*/
 	get_bytes_per_row(bytes_per_row, num_of_rows, argv[1]); //last byte in last row is eof, might be redundant
 
+	/*Allocate memory for the threads parameters*/
 	if (NULL == (p_thread_params = (DECRYPT_THREAD_params_t**)malloc(thread_num * sizeof(DECRYPT_THREAD_params_t*))))
 	{
 		printf("memory allocation failed, exiting\n");
 		exit(1);
 	}
+
+	/*Allocate memory for each thread parameters*/
 	for (i = 0; i < thread_num; i++) {
 
-		p_thread_params[i] = (DECRYPT_THREAD_params_t*)malloc( sizeof(DECRYPT_THREAD_params_t));
+		p_thread_params[i] = (DECRYPT_THREAD_params_t*)malloc(sizeof(DECRYPT_THREAD_params_t));
 		{
 			if (p_thread_params[i] == NULL)
 			{
@@ -94,10 +133,12 @@ int main(int argc, char* argv[])
 		}
 
 	}
-	 N = num_of_rows / thread_num;
-	 mod= num_of_rows % thread_num;
-	for(i=0;i< thread_num;i++)
-	{ 
+	/*Divide the file for sections for each thread. lines is the number of lines that each
+	thread reads and writes*/
+	N = num_of_rows / thread_num;
+	mod = num_of_rows % thread_num;
+	for (i = 0; i < thread_num; i++)
+	{
 		if (mod > 0)
 		{
 			lines = N + 1;
@@ -105,17 +146,18 @@ int main(int argc, char* argv[])
 		}
 		else
 			lines = N;
-		/* Prepare parameters for thread */
+		/* Prepare parameters for thread.
+		pre_lines is the number of lines that the previous thread read*/
 		if (NULL == p_thread_params[i])
 		{
 			printf("Error when allocating memory");
 			return ERROR_CODE;
 		}
-		if (i==0)
+		if (i == 0)
 		{
-			
+
 			p_thread_params[i]->key = key;
-			p_thread_params[i]->end_index = partial_sum(bytes_per_row,0,lines-1)-1;
+			p_thread_params[i]->end_index = partial_sum(bytes_per_row, 0, lines - 1) - 1;
 			p_thread_params[i]->start_index = 0;
 			p_thread_params[i]->path_dst = path;
 			p_thread_params[i]->path_src = argv[1];
@@ -124,7 +166,7 @@ int main(int argc, char* argv[])
 		{
 			p_thread_params[i]->key = key;
 			p_thread_params[i]->start_index = (p_thread_params[i - 1]->end_index + 1);
-			p_thread_params[i]->end_index =( p_thread_params[i]->start_index+(partial_sum(bytes_per_row, pre_lines,pre_lines+lines-1)))-1;
+			p_thread_params[i]->end_index = (p_thread_params[i]->start_index + (partial_sum(bytes_per_row, pre_lines, pre_lines + lines - 1))) - 1;
 			p_thread_params[i]->path_dst = path;
 			p_thread_params[i]->path_src = argv[1];
 		}
@@ -132,18 +174,18 @@ int main(int argc, char* argv[])
 
 	}
 
-	/* Create thread */
+	/* Create threads */
 	for (i = 0; i < thread_num; i++)
 	{
 		p_thread_handles[i] = CreateThreadSimple(DecryptThread, p_thread_params[i], &thread_id[i]);
 		if (NULL == p_thread_handles[i])
 		{
 			printf("Error when creating thread\n");
-			return ERROR_CODE; 
+			return ERROR_CODE;
 		}
 	}
 	/* Wait */
-	wait_code = WaitForMultipleObjects(thread_num, p_thread_handles,TRUE, TIMEOUT_IN_MILLISECONDS); //wait for multi not infinite
+	wait_code = WaitForMultipleObjects(thread_num, p_thread_handles, TRUE, TIMEOUT_IN_MILLISECONDS); //wait for multi not infinite
 	if (WAIT_OBJECT_0 != wait_code)
 	{
 		printf("Error when waiting\n");
@@ -151,7 +193,7 @@ int main(int argc, char* argv[])
 	}
 	for (i = 0; i < thread_num; i++)
 	{
-		/* Check the DWORD returned by MathThread */
+		/* Check the DWORD returned by DecryptThread */
 		ret_val = GetExitCodeThread(p_thread_handles[i], &exit_code);
 		if (0 == ret_val)
 		{
@@ -161,7 +203,7 @@ int main(int argc, char* argv[])
 		/* Print results, if thread succeeded */
 		if (CAESAR_THREAD__CODE_SUCCESS == exit_code)
 		{
-			printf("Thread %d Succeeded\n",thread_id[i]);
+			printf("Thread %d Succeeded\n", thread_id[i]);
 		}
 		else
 		{
@@ -170,8 +212,8 @@ int main(int argc, char* argv[])
 		is_error_exitcode = (is_error_exitcode || !ret_val); //error in exitcode
 	}
 	/* Close thread handle */
-	for (i = 0; i < thread_num; i++) 
-		
+	for (i = 0; i < thread_num; i++)
+
 	{
 		ret_val = CloseHandle(p_thread_handles[i]);
 		is_error_closing_thread = is_error_closing_thread || (!ret_val);

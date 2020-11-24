@@ -1,7 +1,7 @@
 //File Header
 //Authors: Roy janco 311372205 Almog Carmeli 311151070
 //Project Father
-//Description: father_func.h includes functions that are used by main.c
+//Description: file_handler.h includes functions that create handle for read or write files
 
 #include <Windows.h>
 

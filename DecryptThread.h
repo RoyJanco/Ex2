@@ -1,8 +1,8 @@
-// IO_Thread.h
+//File Header
+//Authors: Roy janco 311372205 Almog Carmeli 311151070
+//Project Father
+//Description: DecryptThread.h includes the main function of the thread.
 
-/*
-* A thread that adds up to numbers.
-*/
 
 #ifndef __DecryptThread_H__
 #define __DecryptThread_H__
@@ -37,7 +37,7 @@ typedef struct
 // Function Declarations -------------------------------------------------------
 
 /*
-* Math thread. This thread adds up to numbers.
+* The thread function.
 */
 DWORD WINAPI DecryptThread(LPVOID lpParam);
 
