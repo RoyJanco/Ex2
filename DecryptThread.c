@@ -22,6 +22,7 @@
 #define _CRT_SECURE_NO_DEPRECATE
 #define _CRT_SECURE_NO_WARNINGS
 #define BUF_SIZE 1
+#define ERROR_CODE ((int)(-1))
 // Constants -------------------------------------------------------------------
 
 static const int STATUS_CODE_SUCCESS = 0;
@@ -77,6 +78,7 @@ DWORD WINAPI DecryptThread(LPVOID lpParam)
 	DWORD dwFileSize = GetFileSize(hfile_read, NULL);
 	OVERLAPPED stOverlapped = { 0 };
 	BOOL bResult = FALSE;
+	BOOL ret_val = FALSE;
 	char temp_char = '0';
 
 	/* Set file pointers to start index given by thread parameters*/
@@ -94,6 +96,10 @@ DWORD WINAPI DecryptThread(LPVOID lpParam)
 			nBytesToRead,
 			&dwBytesRead,
 			NULL);
+		if (0 == bResult)
+		{
+			printf("Couldn't read file, error code %d\n", GetLastError());
+		}
 		//inBuffer[1]='\0';
 		//printf("%s", inBuffer);
 
@@ -108,8 +114,19 @@ DWORD WINAPI DecryptThread(LPVOID lpParam)
 		}
 		counter++;
 	}
-	CloseHandle(hfile_read);
-	CloseHandle(hfile_write);
+	/*Close handles*/
+	ret_val = CloseHandle(hfile_read);
+	if (FALSE == ret_val)
+	{
+		printf("Error when closing\n");
+		return ERROR_CODE;
+	}
+	ret_val = CloseHandle(hfile_write);
+	if (FALSE == ret_val)
+	{
+		printf("Error when closing\n");
+		return ERROR_CODE;
+	}
 	return CAESAR_THREAD__CODE_SUCCESS;
 
 

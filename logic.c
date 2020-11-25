@@ -160,13 +160,16 @@ int get_number_of_rows(char* file_path)
 		return STATUS_CODE_FAILURE;
 	}
 	// Parse file and count number of rows
-	while (!feof(p_input_file))
+	if (NULL != p_input_file)
 	{
-		c = fgetc(p_input_file);
-		if ('\n' == c)
-			num_of_rows++;
+		while (!feof(p_input_file))
+		{
+			c = fgetc(p_input_file);
+			if ('\n' == c)
+				num_of_rows++;
+		}
 	}
-
+	
 	// Close file
 
 	if (NULL != p_input_file)
@@ -194,29 +197,33 @@ int get_bytes_per_row(int *bytes_per_row, int num_of_rows, char *file_path)
 		return STATUS_CODE_FAILURE;
 	}
 	// Parse file and count number of rows
-	while (!feof(p_input_file))
+	if (NULL != p_input_file)
 	{
-		c = fgetc(p_input_file);
-		bytes_count++; 
-		//|| feof(p_input_file)
-		if ('\n' == c ) //last byte in last row is eof, might be redundant
+		while (!feof(p_input_file))
 		{
-			bytes_count++; //for CRLF character
-			*bytes_per_row = bytes_count;
-			bytes_per_row++; //increase pointer of bytes_per_row
-			bytes_count = 0;
-		}
-		else if (feof(p_input_file))
-		{
-			/*If got to EOF decrease count, since count was increased earlier*/
-			bytes_count--; 
+			c = fgetc(p_input_file);
+			bytes_count++;
+			//|| feof(p_input_file)
+			if ('\n' == c) //last byte in last row is eof, might be redundant
+			{
+				bytes_count++; //for CRLF character
+				*bytes_per_row = bytes_count;
+				bytes_per_row++; //increase pointer of bytes_per_row
+				bytes_count = 0;
+			}
+			else if (feof(p_input_file))
+			{
+				/*If got to EOF decrease count, since count was increased earlier*/
+				bytes_count--;
 
-			*bytes_per_row = bytes_count;
-			bytes_per_row++;
-			bytes_count = 0;
+				*bytes_per_row = bytes_count;
+				bytes_per_row++;
+				bytes_count = 0;
 
+			}
 		}
 	}
+	
 
 	// Close file
 
@@ -263,6 +270,7 @@ int get_operation(char* flag)
 /* this function return 0 for decryption and 1 for encryption*/
 {
 	
+
 	if (!strcmp(flag, "-e"))
 		return 1;
 	else if (!strcmp(flag, "-d"))

@@ -146,13 +146,15 @@ int Caesar_main(char* argv[])
 		}
 		else
 			lines = N;
-		/* Prepare parameters for thread.
-		pre_lines is the number of lines that the previous thread read*/
-		if (NULL == p_thread_params[i])
+		
+		/*if (NULL == p_thread_params[i])
 		{
 			printf("Error when allocating memory");
 			return ERROR_CODE;
-		}
+		}*/
+
+		/* Prepare parameters for thread.
+		pre_lines is the number of lines that the previous thread read*/
 		if (i == 0)
 		{
 
@@ -177,27 +179,37 @@ int Caesar_main(char* argv[])
 	/* Create threads */
 	for (i = 0; i < thread_num; i++)
 	{
+		//*p_thread_handles++ = CreateThreadSimple(DecryptThread, p_thread_params[i], &thread_id[i]);
 		p_thread_handles[i] = CreateThreadSimple(DecryptThread, p_thread_params[i], &thread_id[i]);
 		if (NULL == p_thread_handles[i])
 		{
-			printf("Error when creating thread\n");
+			printf("Error when creating thread, error code %d\n",GetLastError());
 			return ERROR_CODE;
 		}
 	}
-	/* Wait */
-	wait_code = WaitForMultipleObjects(thread_num, p_thread_handles, TRUE, TIMEOUT_IN_MILLISECONDS); //wait for multi not infinite
+	//p_thread_handles -= thread_num;
+	/* Wait for all threads */
+	wait_code = WaitForMultipleObjects(thread_num, p_thread_handles, TRUE, TIMEOUT_IN_MILLISECONDS); //wait for multi, not infinite
 	if (WAIT_OBJECT_0 != wait_code)
 	{
 		printf("Error when waiting\n");
+		if (WAIT_ABANDONED_0 == wait_code)
+			printf("Abandoned object\n");
+		if (WAIT_TIMEOUT == wait_code)
+			printf("Timeout elapsed\n");
+		if (WAIT_FAILED == wait_code)
+			printf("Failed to wait, error code %d\n",GetLastError());
 		return ERROR_CODE;
 	}
+
 	for (i = 0; i < thread_num; i++)
 	{
 		/* Check the DWORD returned by DecryptThread */
 		ret_val = GetExitCodeThread(p_thread_handles[i], &exit_code);
 		if (0 == ret_val)
 		{
-			printf("Error when getting thread exit code\n");
+			printf("Error when getting thread exit code, error code %d\n",GetLastError());
+			/* Exiting later */
 		}
 
 		/* Print results, if thread succeeded */
@@ -262,6 +274,7 @@ static HANDLE CreateThreadSimple(LPTHREAD_START_ROUTINE p_start_routine,
 		0,                   /*  use default creation flags */
 		p_thread_id);        /*  returns the thread identifier */
 
+	/* Errors are handled in Caesar_main */
 	return thread_handle;
 }
 
