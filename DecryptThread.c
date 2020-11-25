@@ -28,7 +28,7 @@
 static const int STATUS_CODE_SUCCESS = 0;
 static const int STATUS_CODE_FAILURE = -1;
 extern int flag_operation;
-
+extern HANDLE semaphore_gun;
 //Declarations
 //char decrypt_letter(char letter, int key);
 //char* GetFileDirectory(char path[]);
@@ -48,6 +48,21 @@ extern int flag_operation;
 */
 DWORD WINAPI DecryptThread(LPVOID lpParam)
 {
+	DWORD wait_code;
+	/* Wait for all threads to start working simultaneously for madregat bonus*/
+	wait_code = WaitForSingleObject(semaphore_gun, INFINITE);
+	if (WAIT_OBJECT_0 != wait_code)
+	{
+		printf("Error when waiting\n");
+		if (WAIT_ABANDONED_0 == wait_code)
+			printf("Abandoned object\n");
+		if (WAIT_TIMEOUT == wait_code)
+			printf("Timeout elapsed\n");
+		if (WAIT_FAILED == wait_code)
+			printf("Failed to wait, error code %d\n", GetLastError());
+		exit(ERROR_CODE);
+	}
+
 	DECRYPT_THREAD_params_t *p_params;
 	char* path = NULL;
 	int key = 0, i = 0, thread_num = 0;

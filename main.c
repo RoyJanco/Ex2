@@ -32,6 +32,9 @@ static const int STATUS_CODE_SUCCESS = 0;
 static const int STATUS_CODE_FAILURE = -1;
 int flag_operation = 0;
 
+/* Global semaphore for madregat bonus*/
+HANDLE semaphore_gun = NULL;
+
 //Declarations
 
 /*
@@ -88,6 +91,15 @@ int Caesar_main(char* argv[])
 
 	/*Get number of threads*/
 	thread_num = atoi(argv[3]);
+
+	/*Create semaphore for madregat bonus. semaporhe is initialized to zero
+	in order to block all threads*/
+	semaphore_gun = CreateSemaphore(NULL, 0, thread_num, NULL);
+	if (NULL == semaphore_gun)
+	{
+		printf("Could not create semaphore, error code %d\n", GetLastError());
+		exit(1);
+	}
 
 	/*Allocate memory for the handles of the threads*/
 	HANDLE* p_thread_handles = (HANDLE*)malloc(thread_num * sizeof(HANDLE));
@@ -193,6 +205,15 @@ int Caesar_main(char* argv[])
 		p_thread_handles++; //increase pointer
 	}
 	p_thread_handles -= thread_num; // subtruct thread_num so that the pointer points to the beginning of the array
+	
+	/* Wait for all threads to be created for madregat bonus.
+	Then release semaphore so that all the threads can start working. */
+	ret_val = ReleaseSemaphore(semaphore_gun, thread_num, NULL);
+	if (0 == ret_val)
+	{
+		printf("Error releasing semaphore, error code %d\n", GetLastError());
+		return ERROR_CODE;
+	}
 
 	/* Wait for all threads */
 	wait_code = WaitForMultipleObjects(thread_num, p_thread_handles, TRUE, TIMEOUT_IN_MILLISECONDS); //wait for multi, not infinite
