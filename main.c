@@ -123,16 +123,20 @@ int Caesar_main(char* argv[])
 	/*Allocate memory for each thread parameters*/
 	for (i = 0; i < thread_num; i++) {
 
-		p_thread_params[i] = (DECRYPT_THREAD_params_t*)malloc(sizeof(DECRYPT_THREAD_params_t));
+		//p_thread_params[i] = (DECRYPT_THREAD_params_t*)malloc(sizeof(DECRYPT_THREAD_params_t));
+		*p_thread_params = (DECRYPT_THREAD_params_t*)malloc(sizeof(DECRYPT_THREAD_params_t));
+
 		{
-			if (p_thread_params[i] == NULL)
+			if (*p_thread_params == NULL) // p_thread_params[i] == NULL
 			{
 				printf("memory allocation failed, exiting\n");
 				exit(1);
 			}
 		}
-
+		p_thread_params++; //increase pointer
 	}
+	p_thread_params -= thread_num; // subtruct thread_num so that the pointer points to the beginning of the array
+
 	/*Divide the file for sections for each thread. lines is the number of lines that each
 	thread reads and writes*/
 	N = num_of_rows / thread_num;
@@ -179,15 +183,17 @@ int Caesar_main(char* argv[])
 	/* Create threads */
 	for (i = 0; i < thread_num; i++)
 	{
-		//*p_thread_handles++ = CreateThreadSimple(DecryptThread, p_thread_params[i], &thread_id[i]);
-		p_thread_handles[i] = CreateThreadSimple(DecryptThread, p_thread_params[i], &thread_id[i]);
-		if (NULL == p_thread_handles[i])
+		*p_thread_handles = CreateThreadSimple(DecryptThread, p_thread_params[i], &thread_id[i]);
+		//p_thread_handles[i] = CreateThreadSimple(DecryptThread, p_thread_params[i], &thread_id[i]);
+		if (NULL == *p_thread_handles)
 		{
 			printf("Error when creating thread, error code %d\n",GetLastError());
 			return ERROR_CODE;
 		}
+		p_thread_handles++; //increase pointer
 	}
-	//p_thread_handles -= thread_num;
+	p_thread_handles -= thread_num; // subtruct thread_num so that the pointer points to the beginning of the array
+
 	/* Wait for all threads */
 	wait_code = WaitForMultipleObjects(thread_num, p_thread_handles, TRUE, TIMEOUT_IN_MILLISECONDS); //wait for multi, not infinite
 	if (WAIT_OBJECT_0 != wait_code)
@@ -215,11 +221,13 @@ int Caesar_main(char* argv[])
 		/* Print results, if thread succeeded */
 		if (CAESAR_THREAD__CODE_SUCCESS == exit_code)
 		{
-			printf("Thread %d Succeeded\n", thread_id[i]);
+			printf("Thread %d Succeeded\n", *(thread_id+i));
+			//printf("Thread %d Succeeded\n", thread_id[i]);
 		}
 		else
 		{
-			printf("Error in thread %d: %d\n", thread_id[i], exit_code);
+			printf("Error in thread %d: %d\n", *(thread_id+i), exit_code);
+			//printf("Error in thread %d: %d\n", thread_id[i], exit_code);
 		}
 		is_error_exitcode = (is_error_exitcode || !ret_val); //error in exitcode
 	}
@@ -231,7 +239,8 @@ int Caesar_main(char* argv[])
 		is_error_closing_thread = is_error_closing_thread || (!ret_val);
 		if (false == ret_val) // error in closing handle
 		{
-			printf("Error when closing %d\n", thread_id[i]);
+			printf("Error when closing %d\n", (*thread_id+i));
+			//printf("Error when closing %d\n", thread_id[i]);
 			//return ERROR_CODE;
 		}
 	}
