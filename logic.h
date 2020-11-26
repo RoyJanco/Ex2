@@ -18,6 +18,8 @@ int get_bytes_per_row(int* bytes_per_row, int num_of_rows, char* file_path);
 int partial_sum(int* arr, int start, int end);
 int mod_func(int a, int b);
 int get_operation(char* flag);
+int create_output_file(char* path);
+
 
 #endif // !__logic_h__
 

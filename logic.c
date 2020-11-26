@@ -98,6 +98,15 @@ int mod_func(int a, int b);
 */
 int get_operation(char* flag);
 
+/*Creates output file in write mode. Overruns old file if exists. 
+* Input Arguments:
+*	path: A pointer to the file path.
+* Return:
+*	-1 if failed to create file.
+*	0 if succeded to create file.
+*/
+int create_output_file(char* path);
+
 //Implementation
 
 char* GetFileDirectory(char path[],int operation) // if operation=0 decrypt, else encrypt
@@ -277,4 +286,26 @@ int get_operation(char* flag)
 		return 0;
 	else
 		return -1;
+}
+
+int create_output_file(char* path)
+{
+	errno_t retval;
+	FILE* p_output_file = NULL;
+	/*Open output file in write mode. Overruns old file if exists. */
+	retval = fopen_s(&p_output_file, path, "w");
+	if (0 != retval)
+	{
+		printf("Failed to create output file.\n");
+		return STATUS_CODE_FAILURE;
+	}
+	/* Close file */
+	if (NULL != p_output_file)
+		retval = fclose(p_output_file);
+	if (0 != retval)
+	{
+		printf("Failed to close output file.\n");
+		return STATUS_CODE_FAILURE;
+	}
+	return STATUS_CODE_SUCCESS;
 }

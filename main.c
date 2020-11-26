@@ -71,11 +71,12 @@ int Caesar_main(char* argv[])
 	char* path = NULL;
 	int key = 0, i = 0, thread_num = 0, num_of_rows = 0;
 	int* bytes_per_row = NULL;
+	int error_create_file = 0;
 	DWORD* thread_id; ///malloc to size of threadnum
 	DWORD wait_code, exit_code;
 	BOOL ret_val, is_error_exitcode = FALSE, is_error_closing_thread = FALSE;
 	DECRYPT_THREAD_params_t** p_thread_params;
-
+	
 	/*Get operation: decryption or encryption*/
 	flag_operation = get_operation(argv[4]);
 	if (flag_operation == -1)
@@ -83,6 +84,7 @@ int Caesar_main(char* argv[])
 		printf("Invalid input, exiting");
 		exit(1);
 	}
+
 	/*Get file directory from the path of the input file*/
 	path = GetFileDirectory(argv[1], flag_operation);
 
@@ -91,6 +93,13 @@ int Caesar_main(char* argv[])
 
 	/*Get number of threads*/
 	thread_num = atoi(argv[3]);
+
+	/*Create output file*/
+	error_create_file = create_output_file(path);
+	if (0 != error_create_file)
+		exit(-1);
+	
+
 
 	/*Create semaphore for madregat bonus. semaporhe is initialized to zero
 	in order to block all threads*/
