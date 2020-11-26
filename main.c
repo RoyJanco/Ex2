@@ -53,19 +53,19 @@ static HANDLE CreateThreadSimple(LPTHREAD_START_ROUTINE p_start_routine,
 	LPDWORD p_thread_id);
 
 /*The main function of Caesar project*/
-int Caesar_main(char* argv[]);
+int Caesar_main(int argc, char* argv[]);
 
 
 // Function Definitions --------------------------------------------------------
 
 int main(int argc, char* argv[])
 {
-	Caesar_main(argv);
+	Caesar_main(argc, argv);
 	return 0;
 }
 
 
-int Caesar_main(char* argv[])
+int Caesar_main(int argc, char* argv[])
 {
 	int N = 0, mod = 0, lines = 0, pre_lines = 0;
 	char* path = NULL;
@@ -77,6 +77,13 @@ int Caesar_main(char* argv[])
 	BOOL ret_val, is_error_exitcode = FALSE, is_error_closing_thread = FALSE;
 	DECRYPT_THREAD_params_t** p_thread_params;
 	
+	/* Check if there are enough input parameters */
+	if (5 != argc)
+	{
+		printf("Invalid input, exiting");
+		exit(1);
+	}
+
 	/*Get operation: decryption or encryption*/
 	flag_operation = get_operation(argv[4]);
 	if (flag_operation == -1)
